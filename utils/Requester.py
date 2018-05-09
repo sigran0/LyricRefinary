@@ -19,6 +19,9 @@ class Requester:
 
         self.start += self.limit
 
+        if datas is None:
+            return None
+
         if len(datas) <= 0:
             return None
         return datas

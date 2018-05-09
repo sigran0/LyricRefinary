@@ -1,21 +1,63 @@
 import pickle
+from konlpy.tag import Twitter
 from utils.Requester import Requester
 
-target_list = []
+target_list = {}
 
-with open('pickles/over100.pkl', 'rb') as f:
-    datas = pickle.load(f)
+twitter = Twitter()
 
-    for count, data in enumerate(datas):
-        target_list.append(data)
+with open('pickles/over1000.pkl', 'rb') as f:
+    top_morphs = pickle.load(f)
 
-    title = '개미와 베짱이'
-    url = 'http://localhost:3000/api/songs?title={}'.format(title)
+for count, data in enumerate(top_morphs):
+    target_list[data] = count
 
-    requester = Requester(url, limit=1)
+artist = '좋아서하는밴드'
+# url = 'http://localhost:3000/api/songs?artist={}'.format(artist)
+url = 'http://localhost:3000/api/songs?start={}&limit={}'
 
-    song_data = requester.next()
-    lyric = song_data[0]['song_info']['lyric']
-    print(lyric)
+success_song_id = []
 
-    print(target_list)
+count = 0
+success = 0
+fail = 0
+
+requester = Requester(url, limit=1000)
+
+res = requester.next()
+
+while res is not None:
+
+    print('[{}] success : {}, fail: {}'.format(count, success, fail))
+
+    for data in res:
+        count += 1
+        stop = False
+
+        song_info = data['song_info']
+        song_id = data['song_id']
+        title = song_info['title']
+        lyric = song_info['lyric']
+        morphs = twitter.morphs(lyric)
+
+        result = []
+
+        for morph in morphs:
+            if morph in target_list:
+                result.append((target_list[morph], morph))
+            else:
+                stop = True
+                break
+
+        if stop is True:
+            fail += 1
+            continue
+
+        success_song_id.append(song_id)
+        success += 1
+    res = requester.next()
+
+print(' > success : {}, fail : {}'.format(success, fail))
+
+with open('success_song_ids.pkl', 'wb') as f:
+    pickle.dump(success_song_id, f)

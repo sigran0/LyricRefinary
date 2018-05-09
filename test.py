@@ -1,13 +1,22 @@
 
-import konlpy
+from konlpy.tag import Twitter
 from utils.Requester import Requester
 
-title = '개미와 베짱이'
-url = 'http://localhost:3000/api/songs?title={}'.format(title)
+artist = '오늘의라디오'
+url = 'http://localhost:3000/api/songs?artist={}'.format(artist)
 
-req = Requester(url, limit=1)
-data = req.next()
+req = Requester(url, limit=100)
+datas = req.next()
 
-lyric = data[0]['song_info']['lyric']
+twitter = Twitter()
 
-print(lyric)
+for data in datas:
+    song_info = data['song_info']
+    title = song_info['title']
+    lyric = song_info['lyric']
+    morphs = twitter.morphs(lyric)
+
+    print(' > {}'.format(title))
+    print(lyric)
+    print(' > {}'.format(morphs))
+    print()
